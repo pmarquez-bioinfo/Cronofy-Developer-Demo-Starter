@@ -3,6 +3,7 @@ const dotenv = require("dotenv");
 const express = require("express");
 const bodyParser = require("body-parser");
 const Cronofy = require("cronofy");
+const moment = require("moment");
 
 // Enable dotenv
 dotenv.config();
@@ -56,22 +57,53 @@ app.use(express.static(__dirname + "/"));
 // });
 
 app.get("/", async (req, res) => {
-  // Add this:
+  const codeQuery = req.query.code;
+
+  if (codeQuery) {
+    const codeResponse = await cronofyClient
+      .requestAccessToken({
+        client_id: process.env.CLIENT_ID,
+        client_secret: process.env.CLIENT_SECRET,
+        grant_type: "authorization_code",
+        code: codeQuery,
+        redirect_uri: "http://localhost:7070/",
+      })
+      .catch((err) => {
+        if (err.error === "invalid_grant" || err.message === "invalid_grant") {
+          console.warn(
+            "\x1b[33m",
+            "\nWARNING:\nThere was a problem validating the `code` response. The provided code is not known, has been used, or was not paired with the provided redirect_uri.\n",
+            "\x1b[0m"
+          );
+        } else {
+          console.warn(
+            "\x1b[33m",
+            "\nWARNING:\nThere was a problem validating the `code` response. Check that your CLIENT_ID, CLIENT_SECRET, and SUB environment variables are correct.\n",
+            "\x1b[0m"
+          );
+        }
+      });
+
+    console.log(codeResponse);
+  }
+
   const token = await cronofyClient
     .requestElementToken({
       version: "1",
-      permissions: ["account_management"],
+      permissions: ["managed_availability", "account_management"],
       subs: [process.env.SUB],
       origin: "http://localhost:7070",
     })
-    .catch((err) => {
-      console.error(err);
+    .catch(() => {
+      console.error(
+        "\x1b[31m",
+        "\nERROR:\nThere was a problem generating the element token. Check that your CLIENT_ID, CLIENT_SECRET, and SUB environment variables are correct.\n",
+        "\x1b[0m"
+      );
+      return { element_token: { token: "invalid" } };
     });
 
-  // ...code-redemption section remains unchanged
-
   return res.render("home", {
-    // Add the element_token to our template:
     element_token: token.element_token.token,
     client_id: process.env.CLIENT_ID,
     data_center: process.env.DATA_CENTER,
@@ -96,12 +128,31 @@ app.get("/availability", async (req, res) => {
 
 // Route: submit
 app.get("/submit", async (req, res) => {
-  // Submit code goes here
+  // Get the `slot` data from the query string
+  const slot =
+    typeof req.query.slot === "string" ? JSON.parse(req.query.slot) : null;
+
+  const userInfo = await cronofyClient.userInfo();
+  const calendarId =
+    userInfo["cronofy.data"].profiles[0].profile_calendars[0].calendar_id;
+
+  cronofyClient.createEvent({
+    calendar_id: calendarId,
+    event_id: "booking_demo_event",
+    summary: "Demo meeting",
+    description: "The Cronofy developer demo has created this event",
+    start: slot.start,
+    end: slot.end,
+  });
+
+  const meetingDate = moment(slot.start).format("DD MMM YYYY");
+  const start = moment(slot.start).format("LT");
+  const end = moment(slot.end).format("LT");
 
   return res.render("submit", {
-    meetingDate: "MEETING_DATE_GOES_HERE",
-    start: "START_TIME_GOES_HERE",
-    end: "END_TIME_GOES_HERE",
+    meetingDate,
+    start,
+    end,
   });
 });
 
