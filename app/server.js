@@ -79,11 +79,17 @@ app.get("/", async (req, res) => {
 
 // Route: availability
 app.get("/availability", async (req, res) => {
-  // Availability code goes here
+  const token = await cronofyClient.requestElementToken({
+    version: "1",
+    permissions: ["availability"],
+    subs: [process.env.SUB],
+    origin: "http://localhost:7070",
+  });
 
   return res.render("availability", {
-    token: "YOUR_TOKEN_GOES_HERE",
+    element_token: token.element_token.token,
     sub: process.env.SUB,
+    data_center: process.env.DATA_CENTER,
   });
 });
 
