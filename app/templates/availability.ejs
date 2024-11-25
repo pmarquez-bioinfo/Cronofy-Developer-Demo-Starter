@@ -40,7 +40,12 @@
             participants: [
               {
                 required: "all",
-                members: [{ sub: "<%= sub %>" }],
+                members: [
+                  {
+                    sub: "<%= sub %>",
+                    managed_availability: true,
+                  },
+                ],
               },
             ],
             required_duration: { minutes: 60 },
