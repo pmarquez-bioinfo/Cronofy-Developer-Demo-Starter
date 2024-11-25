@@ -15,6 +15,7 @@ const cronofyClient = new Cronofy({
   client_id: process.env.CLIENT_ID,
   client_secret: process.env.CLIENT_SECRET,
   data_center: process.env.DATA_CENTER,
+  access_token: process.env.ACCESS_TOKEN,
 });
 
 // Setup Express
