@@ -11,12 +11,18 @@ dotenv.config();
 // Setup
 const PORT = 7070;
 
+const origin = "http://localhost:7070";
+// const origin = "https://5366-186-50-29-24.ngrok-free.app/";
+
 // configure the Cronofy client
 const cronofyClient = new Cronofy({
   client_id: process.env.CLIENT_ID,
   client_secret: process.env.CLIENT_SECRET,
   data_center: process.env.DATA_CENTER,
   access_token: process.env.ACCESS_TOKEN,
+  oauth: {
+    redirect_uri: origin,
+  },
 });
 
 // Setup Express
@@ -40,7 +46,7 @@ app.use(express.static(__dirname + "/"));
 //         client_secret: process.env.CLIENT_SECRET,
 //         grant_type: "authorization_code",
 //         code: codeFromQuery,
-//         redirect_uri: "http://localhost:7070",
+//         redirect_uri: origin,
 //       })
 //       .catch((err) => {
 //         console.error(err);
@@ -66,7 +72,7 @@ app.get("/", async (req, res) => {
         client_secret: process.env.CLIENT_SECRET,
         grant_type: "authorization_code",
         code: codeQuery,
-        redirect_uri: "http://localhost:7070/",
+        redirect_uri: origin,
       })
       .catch((err) => {
         if (err.error === "invalid_grant" || err.message === "invalid_grant") {
@@ -90,9 +96,9 @@ app.get("/", async (req, res) => {
   const token = await cronofyClient
     .requestElementToken({
       version: "1",
-      permissions: ["managed_availability", "account_management"],
+      permissions: ["managed_availability", "account_management", "agenda"],
       subs: [process.env.SUB],
-      origin: "http://localhost:7070",
+      origin: origin,
     })
     .catch(() => {
       console.error(
@@ -116,7 +122,7 @@ app.get("/availability", async (req, res) => {
     version: "1",
     permissions: ["availability"],
     subs: [process.env.SUB],
-    origin: "http://localhost:7070",
+    origin: origin,
   });
 
   return res.render("availability", {
@@ -145,6 +151,33 @@ app.get("/submit", async (req, res) => {
     end: slot.end,
   });
 
+  // let r = cronofyClient.realTimeScheduling(
+  //   {
+  //     calendar_id: calendarId,
+  //     event_id: "booking_demo_event",
+  //     summary: "Demo meeting",
+  //     description: "The Cronofy developer demo has created this event",
+  //     start: slot.start,
+  //     end: slot.end,
+  //     availability_rule: {
+  //       participants: [
+  //         {
+  //           required: "all",
+  //           members: [
+  //             {
+  //               sub: process.env.SUB,
+  //               managed_availability: true,
+  //             },
+  //           ],
+  //         },
+  //       ],
+  //     },
+  //   },
+  //   () => {}
+  // );
+
+  // console.log(r);
+
   const meetingDate = moment(slot.start).format("DD MMM YYYY");
   const start = moment(slot.start).format("LT");
   const end = moment(slot.end).format("LT");
@@ -157,4 +190,4 @@ app.get("/submit", async (req, res) => {
 });
 
 app.listen(PORT);
-console.log("serving on http://localhost:7070");
+console.log(`serving on ${origin}`);
