@@ -12,7 +12,23 @@ dotenv.config();
 const PORT = 7070;
 
 const origin = "http://localhost:7070";
-// const origin = "https://5366-186-50-29-24.ngrok-free.app/";
+// const callback_url = "http://localhost:7070/real-time-schedule-click";
+const callback_url = "https://5366-186-50-29-24.ngrok-free.app/callback-url";
+
+const contacts = [
+  {
+    name: "John Doe",
+    id: "1",
+    number: "+1234567890",
+    language: "en",
+  },
+  {
+    name: "Jane Doe",
+    id: "2",
+    number: "+0987654321",
+    language: "es",
+  },
+];
 
 // configure the Cronofy client
 const cronofyClient = new Cronofy({
@@ -30,6 +46,7 @@ const app = express();
 app.set("view engine", "ejs");
 app.set("views", process.cwd() + "/app/templates");
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use(express.json());
 app.use(express.static(__dirname + "/"));
 
 // Add the Cronofy client setup here
@@ -128,18 +145,6 @@ app.post("/real-time-schedule-click", async (req, res) => {
     userInfo["cronofy.data"].profiles[0].profile_calendars[0].calendar_id;
 
   let urls = [];
-  const contacts = [
-    {
-      name: "John Doe",
-      number: "+1234567890",
-      language: "en",
-    },
-    {
-      name: "Jane Doe",
-      number: "+0987654321",
-      language: "es",
-    },
-  ];
 
   for (let index = 0; index < contacts.length; index++) {
     let r = await cronofyClient
@@ -189,6 +194,7 @@ app.post("/real-time-schedule-click", async (req, res) => {
             },
           },
         ],
+        callback_url: callback_url + "?id=" + contacts[index].id,
         event_creation: "single",
       })
       .then((response) => {
@@ -302,6 +308,49 @@ app.get("/submit", async (req, res) => {
     start,
     end,
   });
+});
+
+app.post("/callback-url", async (req, res) => {
+  const contactId = req.query.id;
+  const contact =
+    contacts[
+      parseInt(typeof req.query.id === "string" ? req.query.id : "1") - 1
+    ];
+
+  console.log(
+    "Received callback:",
+    req.body,
+    "/n",
+    "contactId = " + contactId,
+    "contact = ",
+    contact?.name
+  );
+
+  // update the event to the calendar
+  const userInfo = await cronofyClient.userInfo();
+  const calendarId =
+    userInfo["cronofy.data"].profiles[0].profile_calendars[0].calendar_id;
+
+  const event = req.body.event;
+  const eventId = event.event_id;
+  const start = event.start;
+  const end = event.end;
+  const summary = event.summary + " with " + contact.name;
+  const description = event.description;
+  const tzid = event.tzid;
+
+  const r = await cronofyClient.createEvent({
+    calendar_id: calendarId,
+    event_id: eventId,
+    summary: summary,
+    description: description,
+    start: start,
+    end: end,
+    tzid: tzid,
+  });
+
+  // Send a response to acknowledge the callback
+  res.status(200).send("Callback received");
 });
 
 app.listen(PORT);
