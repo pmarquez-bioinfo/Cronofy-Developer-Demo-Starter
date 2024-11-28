@@ -103,12 +103,14 @@ app.post("/real-time-schedule-click", async (req, res) => {
     userInfo["cronofy.data"].profiles[0].profile_calendars[0].calendar_id;
 
   let urls = [];
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1); // Set date to tomorrow
+  const now = new Date();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(now.getDate() + 1); // Set date to tomorrow
   tomorrow.setUTCHours(12, 0, 0, 0); // Set time to 12:00:00 UTC
   const startFormatted = tomorrow.toISOString().split(".")[0] + "Z"; // Format without milliseconds
 
-  const end = tomorrow;
+  const end = new Date(now);
+  end.setDate(now.getDate() + 7); // Set date to tomorrow
   end.setUTCHours(20, 0, 0, 0); // Set time to 20:00:00 UTC
   const endFormatted = end.toISOString().split(".")[0] + "Z"; // Format without milliseconds
 
