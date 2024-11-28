@@ -224,7 +224,7 @@ app.post("/real-time-schedule-click", async (req, res) => {
       const url = urls[index];
       message += `\n${url}`;
     }
-    res.json({ message: message, url: urls });
+    res.json({ message: message, urls: urls, contacts: contacts });
   } else {
     res.status(500).json({ error: "Failed to schedule event" });
   }

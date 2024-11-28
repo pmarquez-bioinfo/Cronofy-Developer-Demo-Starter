@@ -57,6 +57,14 @@
                   // Handle the server response
                   const result = await response.json();
                   alert(result.message);
+                  if (result.contacts && result.urls) {
+                    for (let i = 0; i < result.contacts.length; i++) {
+                      const contact = result.contacts[i];
+                      const url = result.urls[i];
+                      const message = `Hi ${contact}, please schedule a meeting with me at ${url}`;
+                      console.log(message);
+                    }
+                  }
                   console.log("Success:", result);
                 } catch (error) {
                   console.error("Error:", error);
