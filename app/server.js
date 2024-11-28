@@ -103,6 +103,21 @@ app.post("/real-time-schedule-click", async (req, res) => {
     userInfo["cronofy.data"].profiles[0].profile_calendars[0].calendar_id;
 
   let urls = [];
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1); // Set date to tomorrow
+  tomorrow.setUTCHours(12, 0, 0, 0); // Set time to 12:00:00 UTC
+  const startFormatted = tomorrow.toISOString().split(".")[0] + "Z"; // Format without milliseconds
+
+  const end = tomorrow;
+  end.setUTCHours(20, 0, 0, 0); // Set time to 20:00:00 UTC
+  const endFormatted = end.toISOString().split(".")[0] + "Z"; // Format without milliseconds
+
+  const availablePeriods = [
+    {
+      start: startFormatted, // Dynamic start time
+      end: endFormatted, // Dynamic end time
+    },
+  ];
 
   for (let index = 0; index < contacts.length; index++) {
     const randomId = Math.floor(Math.random() * 1000000);
@@ -117,8 +132,8 @@ app.post("/real-time-schedule-click", async (req, res) => {
           description: "The Cronofy developer demo has created this event",
           tzid: "Etc/UTC",
         },
-        start: "2024-12-13T12:00:00Z",
-        end: "2024-12-13T20:00:00Z",
+        start: startFormatted,
+        end: endFormatted,
         required_duration: { minutes: 60 },
         availability: {
           participants: [
@@ -136,12 +151,7 @@ app.post("/real-time-schedule-click", async (req, res) => {
           required_duration: {
             minutes: 30,
           },
-          available_periods: [
-            {
-              start: "2024-12-11T12:00:00Z",
-              end: "2024-12-11T20:00:00Z",
-            },
-          ],
+          available_periods: availablePeriods,
         },
         target_calendars: [
           {
