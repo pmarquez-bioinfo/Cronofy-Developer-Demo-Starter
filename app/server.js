@@ -9,11 +9,10 @@ const moment = require("moment");
 dotenv.config();
 
 // Setup
-const PORT = 7070;
 
-const origin = "http://localhost:7070";
-// const callback_url = "http://localhost:7070/real-time-schedule-click";
-const callback_url = "https://5366-186-50-29-24.ngrok-free.app/callback-url";
+const PORT = process.env.PORT || 7070;
+const ORIGIN = process.env.ORIGIN || `http://localhost:${PORT}`;
+const CALLBACK_URL = process.env.CALLBACK_URL || `${ORIGIN}/callback-url`;
 
 const contacts = [
   {
@@ -37,7 +36,7 @@ const cronofyClient = new Cronofy({
   data_center: process.env.DATA_CENTER,
   access_token: process.env.ACCESS_TOKEN,
   oauth: {
-    redirect_uri: origin,
+    redirect_uri: ORIGIN,
   },
 });
 
@@ -89,7 +88,7 @@ app.get("/", async (req, res) => {
         client_secret: process.env.CLIENT_SECRET,
         grant_type: "authorization_code",
         code: codeQuery,
-        redirect_uri: origin,
+        redirect_uri: ORIGIN,
       })
       .catch((err) => {
         if (err.error === "invalid_grant" || err.message === "invalid_grant") {
@@ -115,7 +114,7 @@ app.get("/", async (req, res) => {
       version: "1",
       permissions: ["managed_availability", "account_management", "agenda"],
       subs: [process.env.SUB],
-      origin: origin,
+      origin: ORIGIN,
     })
     .catch(() => {
       console.error(
@@ -139,7 +138,6 @@ app.post("/real-time-schedule-click", async (req, res) => {
   console.log("Button was clicked!");
   console.log("Received data:", req.body);
 
-  /////
   const userInfo = await cronofyClient.userInfo();
   const calendarId =
     userInfo["cronofy.data"].profiles[0].profile_calendars[0].calendar_id;
@@ -150,7 +148,7 @@ app.post("/real-time-schedule-click", async (req, res) => {
     let r = await cronofyClient
       .realTimeScheduling({
         oauth: {
-          redirect_uri: origin,
+          redirect_uri: ORIGIN,
         },
         event: {
           event_id: "booking_demo_event",
@@ -194,7 +192,7 @@ app.post("/real-time-schedule-click", async (req, res) => {
             },
           },
         ],
-        callback_url: callback_url + "?id=" + contacts[index].id,
+        callback_url: CALLBACK_URL + "?id=" + contacts[index].id,
         event_creation: "single",
       })
       .then((response) => {
@@ -243,7 +241,7 @@ app.get("/availability", async (req, res) => {
     version: "1",
     permissions: ["availability"],
     subs: [process.env.SUB],
-    origin: origin,
+    origin: ORIGIN,
   });
 
   return res.render("availability", {
@@ -320,7 +318,6 @@ app.post("/callback-url", async (req, res) => {
   console.log(
     "Received callback:",
     req.body,
-    "/n",
     "contactId = " + contactId,
     "contact = ",
     contact?.name
@@ -354,4 +351,4 @@ app.post("/callback-url", async (req, res) => {
 });
 
 app.listen(PORT);
-console.log(`serving on ${origin}`);
+console.log(`serving on ${ORIGIN}`);
