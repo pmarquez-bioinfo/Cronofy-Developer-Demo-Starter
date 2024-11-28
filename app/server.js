@@ -116,6 +116,121 @@ app.get("/", async (req, res) => {
   });
 });
 
+// Define an endpoint to handle button clicks
+// Route to handle button click
+app.post("/real-time-schedule-click", async (req, res) => {
+  console.log("Button was clicked!");
+  console.log("Received data:", req.body);
+
+  /////
+  const userInfo = await cronofyClient.userInfo();
+  const calendarId =
+    userInfo["cronofy.data"].profiles[0].profile_calendars[0].calendar_id;
+
+  let urls = [];
+  const contacts = [
+    {
+      name: "John Doe",
+      number: "+1234567890",
+      language: "en",
+    },
+    {
+      name: "Jane Doe",
+      number: "+0987654321",
+      language: "es",
+    },
+  ];
+
+  for (let index = 0; index < contacts.length; index++) {
+    let r = await cronofyClient
+      .realTimeScheduling({
+        oauth: {
+          redirect_uri: origin,
+        },
+        event: {
+          event_id: "booking_demo_event",
+          summary: "Demo meeting",
+          description: "The Cronofy developer demo has created this event",
+          tzid: "Etc/UTC",
+        },
+        start: "2024-12-13T12:00:00Z",
+        end: "2024-12-13T20:00:00Z",
+        required_duration: { minutes: 60 },
+        availability: {
+          participants: [
+            {
+              members: [
+                {
+                  sub: process.env.SUB,
+                  calendar_ids: [calendarId],
+                },
+              ],
+              required: "all",
+              managed_availability: true,
+            },
+          ],
+          required_duration: {
+            minutes: 30,
+          },
+          available_periods: [
+            {
+              start: "2024-12-11T12:00:00Z",
+              end: "2024-12-11T20:00:00Z",
+            },
+          ],
+        },
+        target_calendars: [
+          {
+            sub: process.env.SUB,
+            calendar_id: calendarId,
+            attendee: {
+              email: "pablo@talkingpts.org",
+              display_name: "Pablo Marquez",
+            },
+          },
+        ],
+        event_creation: "single",
+      })
+      .then((response) => {
+        const contact = contacts[index];
+        urls.push(
+          response.real_time_scheduling.url + "?locale=" + contact.language
+        );
+        console.log(response);
+      })
+      .catch((err) => {
+        if (err.error === "invalid_grant" || err.message === "invalid_grant") {
+          console.warn(
+            "\x1b[33m",
+            "\nWARNING:\nThere was a problem validating the `code` response. The provided code is not known, has been used, or was not paired with the provided redirect_uri.\n",
+            "\x1b[0m"
+          );
+        } else {
+          console.warn(
+            "\x1b[33m",
+            "\nWARNING:\nThere was a problem validating the `code` response. Check that your CLIENT_ID, CLIENT_SECRET, and SUB environment variables are correct.\n",
+            "\x1b[0m"
+          );
+        }
+      });
+  }
+
+  if (urls.length > 0) {
+    let message = "Event scheduled successfully";
+    if (urls.length > 1) {
+      message = "Events scheduled successfully";
+    }
+    for (let index = 0; index < urls.length; index++) {
+      const url = urls[index];
+      message += `\n${url}`;
+    }
+    res.json({ message: message, url: urls });
+  } else {
+    res.status(500).json({ error: "Failed to schedule event" });
+  }
+  // Send a response back to the client
+});
+
 // Route: availability
 app.get("/availability", async (req, res) => {
   const token = await cronofyClient.requestElementToken({

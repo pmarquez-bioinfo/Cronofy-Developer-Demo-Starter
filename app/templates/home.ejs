@@ -36,6 +36,36 @@
           <a href="/availability" class="button">View availability</a>
         </div>
 
+        <div>
+          <hr />
+          <butotn id="real-time-schedule" class="button"
+            >Create real time scheduling event</butotn
+          >
+          <script>
+            /* UI Element initialization code goes here */
+            document
+              .getElementById("real-time-schedule")
+              .addEventListener("click", async () => {
+                try {
+                  // Send a POST request to the server
+                  const response = await fetch("/real-time-schedule-click", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ message: "Button was clicked!" }),
+                  });
+
+                  // Handle the server response
+                  const result = await response.json();
+                  alert(result.message);
+                  console.log("Success:", result);
+                } catch (error) {
+                  console.error("Error:", error);
+                  alert("Something went wrong.");
+                }
+              });
+          </script>
+        </div>
+
         <hr />
 
         <div id="cronofy-availability-rules">
