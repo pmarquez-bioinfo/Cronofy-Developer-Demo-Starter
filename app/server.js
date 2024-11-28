@@ -105,13 +105,14 @@ app.post("/real-time-schedule-click", async (req, res) => {
   let urls = [];
 
   for (let index = 0; index < contacts.length; index++) {
+    const randomId = Math.floor(Math.random() * 1000000);
     let r = await cronofyClient
       .realTimeScheduling({
         oauth: {
           redirect_uri: ORIGIN,
         },
         event: {
-          event_id: "booking_demo_event",
+          event_id: "booking_demo_event" + randomId,
           summary: "Demo meeting",
           description: "The Cronofy developer demo has created this event",
           tzid: "Etc/UTC",
