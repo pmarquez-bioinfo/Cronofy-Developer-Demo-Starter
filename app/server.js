@@ -2,8 +2,8 @@
 const dotenv = require("dotenv");
 const express = require("express");
 const bodyParser = require("body-parser");
-const Cronofy = require("cronofy");
 const moment = require("moment");
+const cronofyClient = require("./config");
 
 // Enable dotenv
 dotenv.config();
@@ -29,17 +29,6 @@ const contacts = [
   },
 ];
 
-// configure the Cronofy client
-const cronofyClient = new Cronofy({
-  client_id: process.env.CLIENT_ID,
-  client_secret: process.env.CLIENT_SECRET,
-  data_center: process.env.DATA_CENTER,
-  access_token: process.env.ACCESS_TOKEN,
-  oauth: {
-    redirect_uri: ORIGIN,
-  },
-});
-
 // Setup Express
 const app = express();
 app.set("view engine", "ejs");
@@ -49,35 +38,6 @@ app.use(express.json());
 app.use(express.static(__dirname + "/"));
 
 // Add the Cronofy client setup here
-
-// Route: home
-// app.get("/", async (req, res) => {
-//   // Extract the "code" from the page's query string:
-//   const codeFromQuery = req.query.code;
-//
-//   if (codeFromQuery) {
-//     const codeResponse = await cronofyClient
-//       .requestAccessToken({
-//         client_id: process.env.CLIENT_ID,
-//         client_secret: process.env.CLIENT_SECRET,
-//         grant_type: "authorization_code",
-//         code: codeFromQuery,
-//         redirect_uri: origin,
-//       })
-//       .catch((err) => {
-//         console.error(err);
-//       });
-//
-//     console.log(codeResponse);
-//   }
-//
-//   // ...template rendering
-//   return res.render("home", {
-//     client_id: process.env.CLIENT_ID,
-//     data_center: process.env.DATA_CENTER,
-//   });
-// });
-
 app.get("/", async (req, res) => {
   const codeQuery = req.query.code;
 
